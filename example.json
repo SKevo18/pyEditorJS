@@ -118,7 +118,7 @@
                 "file" : {
                     "url" : "https://codex.so/public/app/img/external/codex2x.png"
                 },
-                "caption" : "",
+                "caption" : "Test image",
                 "withBorder" : false,
                 "stretched" : false,
                 "withBackground" : false
