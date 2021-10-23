@@ -1,4 +1,4 @@
-# pyEditorJS
+# pyEditor.js
 
 A very simple [Editor.js](https://editorjs.io) parser written in pure Python.
 
