@@ -8,7 +8,7 @@ except ImportError:
 
     class bleach:
         @staticmethod
-        def clean(text: str, tags: list=[], classes: list=[]):
+        def clean(text: str, tags: list=[], attributes: list=[]):
             warnings.warn("Requested sanitization, but `bleach` is not installed. Not sanitizing...", UserWarning)
             return text
 
