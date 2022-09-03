@@ -1,3 +1,9 @@
 .vscode/
 __pycache__/
-.pyc
+.pytest-cache/
+env/
+
+documentation/
+
+dist/*
+*.egg-info

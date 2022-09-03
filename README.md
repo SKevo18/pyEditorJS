@@ -1,35 +1,65 @@
-# pyEditor.js
+# pyEditorJS
 
-A very simple [Editor.js](https://editorjs.io) parser written in pure Python.
+A minimal, fast, Python 3.6+ package for parsing [Editor.js](https://editorjs.io) content.
 
-Soon-to-be published on [PyPI](https://pypi.org).
+## Features
 
-### Features:
-- Automatically convert Editor.js's JSON output to HTML;
-- Sanitization and automatic anchor link converting done by using [bleach]();
-- Supports Tailwind CSS by default;
-- WYSIWYG - output is made to look as similar to editor as possible.
+- Handles all out-of-the-box Editor.js elements;
+- Optional sanitization via the `bleach` library;
+- Checks whether the data is valid (e. g.: a header can't have more than 6 levels), and raises `EditorJsParseError` if data is malformed;
+- Uses Editor.js's class names for styles, so the output will be consistent with WYSIWYG (see [Editor.js's example style](https://github.com/codex-team/editor.js/blob/8ae8823dcd6877d63241fcb94694a8a18744485d/example/assets/demo.css) and [styles documentation](https://editorjs.io/styles))
 
+## Installation
 
-### Basic Usage:
-
-pyEditorJS requires Python 3.6 or newer. It is very simple to get started:
-
-```python
-from pyeditorjs import load
-
-DATA = ... # JSON string/dict of Editor.js output data
-HTML = load(DATA)
-
-print(HTML) # HTML str
+```bash
+    pip install pyeditorjs
 ```
 
-You can then pass the HTML string to a parser like [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/) to beautify or modify the result HTML.
+**Optional:** install [bleach](https://pypi.org/project/bleach) for clean HTML:
 
-See `example.json` => `example.html` files in [this project's GitHub repository](https://github.com/CWKevo/pyeditorjs) for sample outputs.
+```bash
+    pip install bleach
+```
 
+## Usage
 
-### TO-DO:
-1. Add support for all out-of-box Editor.js elements;
-2. Do a PyPI release (using GH actions);
-3. Add support for more blocks from Editor.js extensions
+### Quickstart
+
+```python
+from pyeditorjs import EditorJsParser
+
+editor_js_data = ... # your Editor.js JSON data
+parser = EditorJsParser(editor_js_data) # initialize the parser
+
+html = parser.html(sanitize=True) # `sanitize=True` requires `bleach` to be installed
+print(html) # your clean HTML
+```
+
+### Obtain texts only (for creating audio-only version, for example)
+
+> **WARNING:** This does not sanitize the texts! Please, call `bleach.clean(...)` directly. This also doesn't obtain text from bold texts, markers, etc... - you should use [BeautifulSoup](https://pypi.org/project/beautifulsoup4/) for this.
+
+```python
+#import bleach
+from pyeditorjs import EditorJsParser
+
+editor_js_data = ... # your Editor.js JSON data
+parser = EditorJsParser(editor_js_data) # initialize the parser
+
+all_texts = []
+
+for block in parser:
+    text = getattr(block, 'text', None)
+
+    if text:
+        all_texts.append(text) # all_texts.append(bleach.clean(text))
+
+print(all_texts)
+```
+
+## Disclaimer
+
+This is a community-provided project, and is not affiliated with the Editor.js team.
+It was created in my spare time. I cannot make sure that it will receive consistent updates.
+
+Because of this, PRs, bug reports and suggestions are welcome!
