@@ -63,3 +63,5 @@ This is a community-provided project, and is not affiliated with the Editor.js t
 It was created in my spare time. I cannot make sure that it will receive consistent updates.
 
 Because of this, PRs, bug reports and suggestions are welcome!
+
+<a href="https://www.buymeacoffee.com/skevo"><img src="https://img.buymeacoffee.com/button-api/?text=Support me&emoji=🐣&slug=skevo&button_colour=ffa200&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=FFDD00" /></a>
