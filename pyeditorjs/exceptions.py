@@ -1,4 +1,4 @@
-__all__ = ['EditorJsParseError']
+__all__ = ["EditorJsParseError"]
 
 
 class EditorJsParseError(Exception):
