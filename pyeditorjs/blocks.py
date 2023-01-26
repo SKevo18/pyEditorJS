@@ -28,7 +28,7 @@ __all__ = [
     "DelimiterBlock",
     "ImageBlock",
     "CodeBlock",
-    "QuoteBlock"
+    "QuoteBlock",
 ]
 
 
@@ -101,7 +101,7 @@ class HeaderBlock(EditorJsBlock):
     """Valid range for header levels. Default is `range(1, 7)` - so, `0` - `6`."""
 
     @property
-    def text(self) -> t.Optional[str] :
+    def text(self) -> t.Optional[str]:
         """
         Returns the header's text.
         """
@@ -166,17 +166,18 @@ class QuoteBlock(EditorJsBlock):
     def html(self, sanitize: bool = False) -> str:
         caption = self.caption.replace("<br>", "")
 
-        figcaption = rf'<figcaption class="ce-quote__caption" data-placeholder="{_sanitize(caption) if sanitize else caption}">{_sanitize(caption) if sanitize else caption}</figcaption>' if caption else ""
+        figcaption = (
+            rf'<figcaption class="ce-quote__caption" data-placeholder="{_sanitize(caption) if sanitize else caption}">{_sanitize(caption) if sanitize else caption}</figcaption>'
+            if caption
+            else ""
+        )
 
         parts = [
             rf'<div class="cdx-block ce-quote ce-quote-with-align-{self.alignment}{" ce-quote-with-caption" if self.caption else ""}">'
             r" <figure>"
             r'      <blockquote class="ce-quote__blockquote">',
-            rf'{_sanitize(self.text) if sanitize else self.text}',
-            r"      </blockquote>"
-            rf'{figcaption}'
-            r" </figure>"
-            r"</div>",
+            rf"{_sanitize(self.text) if sanitize else self.text}",
+            r"      </blockquote>" rf"{figcaption}" r" </figure>" r"</div>",
         ]
 
         return "".join(parts)
