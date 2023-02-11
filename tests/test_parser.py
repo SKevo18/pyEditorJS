@@ -35,8 +35,6 @@ def test_extra():
         if text:
             all_texts.append(text)
 
-    print(all_texts)
-
 
 if __name__ == "__main__":
     test_parser()
