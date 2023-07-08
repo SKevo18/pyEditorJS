@@ -15,7 +15,7 @@ A minimal, fast, Python 3.6+ package for parsing [Editor.js](https://editorjs.io
     pip install pyeditorjs
 ```
 
-**Optional:** install [bleach](https://pypi.org/project/bleach) for clean HTML:
+install [bleach](https://pypi.org/project/bleach) for clean HTML:
 
 ```bash
     pip install bleach

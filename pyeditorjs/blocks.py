@@ -1,20 +1,6 @@
 import typing as t
 
-try:
-    import bleach  # type: ignore
-
-except ImportError:
-    import warnings
-
-    class bleach:
-        @staticmethod
-        def clean(text: str, tags: list = [], attributes: list = []):
-            warnings.warn(
-                "Requested sanitization, but `bleach` is not installed. Not sanitizing...",
-                UserWarning,
-            )
-            return text
-
+import bleach
 
 from dataclasses import dataclass
 from .exceptions import EditorJsParseError
@@ -26,17 +12,27 @@ __all__ = [
     "ParagraphBlock",
     "ListBlock",
     "DelimiterBlock",
-    "ImageBlock",
     "CodeBlock",
     "QuoteBlock",
+    "MediaBlock",
+    "RawBlock",
+    "EmbedBlock"
 ]
 
 
 def _sanitize(html: str) -> str:
     return bleach.clean(
         html,
-        tags=["b", "i", "u", "a", "mark", "code", "s", "del"],
+        tags=["b", "i", "u", "a", "mark", "code", "s", "del", "br"],
         attributes=["class", "data-placeholder", "href"],
+    )
+
+
+def _clean(html: str) -> str:
+    return bleach.clean(
+        html.replace("<br>", "\n"),
+        tags=[],
+        attributes=[],
     )
 
 
@@ -72,6 +68,14 @@ class EditorJsBlock:
         """
 
         return self._data.get("data", {})
+
+    @property
+    def tunes(self) -> dict:
+        """
+        Returns the actual block tunes.
+        """
+
+        return self._data.get("tunes", {})
 
     def html(self, sanitize: bool = False) -> str:
         """
@@ -135,7 +139,11 @@ class ParagraphBlock(EditorJsBlock):
         return self.data.get("text", None)
 
     def html(self, sanitize: bool = False) -> str:
-        return rf'<p class="cdx-block ce-paragraph">{_sanitize(self.text) if sanitize else self.text}</p>'
+        classes = ['cdx-block', 'ce-paragraph']
+
+        alignment = self.tunes.get("AlignmentTune", {"alignment": "left"})["alignment"]
+
+        return rf'<p style="text-align: {alignment}" class="{" ".join(classes)}">{_sanitize(self.text) if sanitize else self.text}</p>'
 
 
 class QuoteBlock(EditorJsBlock):
@@ -167,7 +175,7 @@ class QuoteBlock(EditorJsBlock):
         caption = self.caption.replace("<br>", "")
 
         figcaption = (
-            rf'<figcaption class="ce-quote__caption" data-placeholder="{_sanitize(caption) if sanitize else caption}">{_sanitize(caption) if sanitize else caption}</figcaption>'
+            rf'<figcaption class="ce-quote__caption">{_sanitize(caption) if sanitize else caption}</figcaption>'
             if caption
             else ""
         )
@@ -218,17 +226,89 @@ class ListBlock(EditorJsBlock):
 
 class DelimiterBlock(EditorJsBlock):
     def html(self, sanitize: bool = False) -> str:
-        return r'<div class="cdx-block ce-delimiter"><hr/></div>'
+        return r'<div class="cdx-block ce-delimiter">***</div>'
 
 
-class ImageBlock(EditorJsBlock):
+class RawBlock(EditorJsBlock):
+    def html(self, sanitize: bool = False) -> str:
+        return rf'<div class="cdx-block ce-raw">{self.data.get("html", "")}</div>'
+
+
+class EmbedBlock(EditorJsBlock):
+
+    @property
+    def service(self) -> t.Optional[str]:
+        """
+        service of the embed.
+        """
+
+        return self.data.get("service", "")
+
+    @property
+    def source(self) -> t.Optional[str]:
+        """
+        source of the embed
+        """
+
+        return self.data.get("source", "")
+
+    @property
+    def embed(self) -> t.Optional[str]:
+        """
+        embed source of the embed
+        """
+
+        return self.data.get("embed", "")
+
+    @property
+    def caption(self) -> t.Optional[str]:
+        """
+        The embed's caption.
+        """
+
+        return self.data.get("caption", None)
+
+    def html(self, sanitize: bool = False) -> str:
+        parts = [
+            rf'<div class="cdx-block embed-tool embed-tool-{self.service}">'
+            rf'<figure>'
+            rf'<div class="embed-tool__embed">'
+        ]
+
+        if self.service == "youtube":
+            parts += [
+                f'<iframe src="{self.embed}" width="100%" style="aspect-ratio: 16/9"></iframe>'
+            ]
+        elif self.service == "twitter":
+            parts += [
+                '<blockquote class="twitter-tweet">'
+                f'<blockquote class="twitter-tweet"><a href="{self.source}"></a></blockquote>'
+                f'<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>'
+            ]
+        parts += [f'</div>'
+                  f'<figcaption class="embed-tool__caption">{_sanitize(self.caption)}</figcaption>'
+                  '</figure>'
+                  '</div>']
+
+        return "".join(parts)
+
+
+class MediaBlock(EditorJsBlock):
+    @property
+    def file_mimetype(self) -> t.Optional[str]:
+        """
+        mimetype of the media file.
+        """
+
+        return self.data.get("file", {}).get("mimetype", None)
+
     @property
     def file_url(self) -> t.Optional[str]:
         """
-        URL of the image file.
+        URL of the media file.
         """
 
-        return self.data.get("file", {}).get("url", None)
+        return self.data.get("file", {}).get("urls", None).get("full", None)
 
     @property
     def caption(self) -> t.Optional[str]:
@@ -264,20 +344,31 @@ class ImageBlock(EditorJsBlock):
 
     def html(self, sanitize: bool = False) -> str:
         if self.file_url.startswith("data:image/"):
-            _img = self.file_url
+            _url = self.file_url
         else:
-            _img = _sanitize(self.file_url) if sanitize else self.file_url
+            _url = _sanitize(self.file_url)
 
-        caption = self.caption.replace("<br>", "")
+        caption = _sanitize(self.caption)
 
         parts = [
-            rf'<div class="cdx-block image-tool image-tool--filled {"image-tool--stretched" if self.stretched else ""} {"image-tool--withBorder" if self.with_border else ""} {"image-tool--withBackground" if self.with_background else ""}">'
+            rf'<div class="cdx-block media-tool media-tool--filled {"media-tool--stretched" if self.stretched else ""} {"media-tool--withBorder" if self.with_border else ""} {"media-tool--withBackground" if self.with_background else ""}">'
             rf"<figure>"
-            r'  <div class="image-tool__image">',
-            r'      <div class="image-tool__image-preloader"></div>',
-            rf'     <img class="image-tool__image-picture" src="{_img}"/>',
+            r'  <div class="media-tool__media">',
+
+        ]
+
+        if self.file_mimetype.startswith('image'):
+            parts += [
+                rf'     <img class="media-tool__media-picture" src="{_url}" alt="{_clean(caption)}" />',
+            ]
+        elif self.file_mimetype.startswith('video'):
+            parts += [
+                rf'     <video class="media-tool__media-picture" src="{_url}" controls=""></video>',
+            ]
+
+        parts += [
             r"  </div>"
-            rf'<figcaption class="image-tool__caption" data-placeholder="{_sanitize(caption) if sanitize else caption}">{_sanitize(caption) if sanitize else caption}</figcaption>'
+            rf'<figcaption class="media-tool__caption" data-placeholder="{caption}">{caption}</figcaption>'
             rf"</figure>"
             r"</div>",
         ]

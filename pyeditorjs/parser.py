@@ -23,7 +23,7 @@ class EditorJsParser:
             )
 
     @staticmethod
-    def _get_block(data: dict) -> t.Optional[t.Type[EditorJsBlock]]:
+    def _get_block(data: dict) -> t.Optional[EditorJsBlock]:
         """
         Obtains block instance from block data.
         """
@@ -33,9 +33,11 @@ class EditorJsParser:
             "paragraph": ParagraphBlock,
             "list": ListBlock,
             "delimiter": DelimiterBlock,
-            "image": ImageBlock,
             "code": CodeBlock,
             "quote": QuoteBlock,
+            "media": MediaBlock,
+            "raw": RawBlock,
+            "embed": EmbedBlock
         }
 
         _type = data.get("type", None)
