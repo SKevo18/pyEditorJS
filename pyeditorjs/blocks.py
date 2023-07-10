@@ -355,13 +355,12 @@ class MediaBlock(EditorJsBlock):
         ]
 
         if self.file_mimetype.startswith('image'):
-            srcset = f'{_url.get("full", None)}, ' \
-                     f'{_url.get("normal", None)} 1080w, ' \
+            srcset = f'{_url.get("normal", None)} 1080w, ' \
                      f'{_url.get("medium", None)} 720w, ' \
                      f'{_url.get("small", None)} 480w'
 
             parts += [
-                rf'     <img class="media-tool__media-picture" src="{_url.get("normal", None)}" srcset="{srcset}" alt="{_clean(caption)}" />',
+                rf'     <img class="media-tool__media-picture" src="{_url.get("full", None)}" srcset="{srcset}" alt="{_clean(caption)}" />',
             ]
         elif self.file_mimetype.startswith('video'):
             parts += [
