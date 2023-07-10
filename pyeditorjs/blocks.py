@@ -303,12 +303,12 @@ class MediaBlock(EditorJsBlock):
         return self.data.get("file", {}).get("mimetype", None)
 
     @property
-    def file_url(self) -> t.Optional[str]:
+    def file_url(self) -> t.Optional[dict]:
         """
         URL of the media file.
         """
 
-        return self.data.get("file", {}).get("urls", None).get("full", None)
+        return self.data.get("file", {}).get("urls", None)
 
     @property
     def caption(self) -> t.Optional[str]:
@@ -343,10 +343,7 @@ class MediaBlock(EditorJsBlock):
         return self.data.get("withBackground", False)
 
     def html(self, sanitize: bool = False) -> str:
-        if self.file_url.startswith("data:image/"):
-            _url = self.file_url
-        else:
-            _url = _sanitize(self.file_url)
+        _url = self.file_url
 
         caption = _sanitize(self.caption)
 
@@ -358,12 +355,17 @@ class MediaBlock(EditorJsBlock):
         ]
 
         if self.file_mimetype.startswith('image'):
+            srcset = f'{_url.get("full", None)}, ' \
+                     f'{_url.get("normal", None)} 1080w, ' \
+                     f'{_url.get("medium", None)} 720w, ' \
+                     f'{_url.get("small", None)} 480w'
+
             parts += [
-                rf'     <img class="media-tool__media-picture" src="{_url}" alt="{_clean(caption)}" />',
+                rf'     <img class="media-tool__media-picture" src="{_url.get("normal", None)}" srcset="{srcset}" alt="{_clean(caption)}" />',
             ]
         elif self.file_mimetype.startswith('video'):
             parts += [
-                rf'     <video class="media-tool__media-picture" src="{_url}" controls=""></video>',
+                rf'     <video class="media-tool__media-picture" src="{_url.get("full", None)}" controls=""></video>',
             ]
 
         parts += [
